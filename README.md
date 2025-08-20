@@ -1,4 +1,4 @@
-# Voxel Framework
+# Voxel
 
 **Ultimate Plugin Developer Framework - Forge/Fabric for Paper Plugins**
 
