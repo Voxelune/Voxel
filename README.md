@@ -151,10 +151,6 @@ Voxel is built with a modular architecture:
 - **Scripting Runtime**: Sandboxed script execution
 - **Data Layer**: Async persistence and caching
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
