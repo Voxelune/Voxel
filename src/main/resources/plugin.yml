@@ -1,20 +1,24 @@
 name: Voxel
 author: Voxelune
 main: dev.voxelune.voxel.VoxelPlugin
-version: 1.21.1
+version: 2.0.0
 api-version: '1.21'
 load: POSTWORLD
 depend: []
+description: Ultimate plugin developer framework - Forge/Fabric for Paper plugins
+website: https://github.com/voxelune/voxel
 commands:
   voxel:
-    description: Voxel root command
-    permission: voxel.user.use
+    description: Voxel developer framework
+    permission: voxel.dev.use
+    usage: /voxel <reload|devinfo>
 permissions:
-  voxel.user.use:
-    default: true
-  voxel.admin.reload:
+  voxel.dev.use:
     default: op
-  voxel.admin.inspect:
+    description: Access to Voxel developer commands
+  voxel.dev.reload:
     default: op
-  voxel.dev.test:
+    description: Reload Voxel framework
+  voxel.dev.info:
     default: op
+    description: View Voxel development information

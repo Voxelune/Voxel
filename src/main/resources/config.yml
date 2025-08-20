@@ -1,30 +1,73 @@
-# Voxel Core Library Configuration
+# Voxel Ultimate Plugin Developer Framework Configuration
 
-logging:
-  level: INFO  # INFO|DEBUG|TRACE
+# Developer mode settings
+developer:
+  mode: true  # Enable developer features
+  hot_reload: true  # Hot reload mechanics and definitions
+  debug_logging: true  # Verbose debug output
+  module_loading: false  # Allow loading external modules (security risk)
 
+# Core framework modules
 modules:
-  enable:
-    core: true
-    registry: true
-    mechanic: true
-    capabilities: true
-    model_router: true
-    utils: true
+  registry: true
+  mechanics: true
+  packets: true
+  models: true
+  stats: true
+  profiles: true
+  jobs: true
+  shops: true
+  dungeons: true
+  worldgen: true
+  scripting: true
+  editor_integration: true
 
-mechanics:
-  hot_reload: true
-  watch_dirs:
-    - "plugins/Voxel/mechanics"
+# Performance settings
+performance:
+  async_io: true
+  registry_cache_size: 10000
+  mechanic_execution_timeout: 5000  # milliseconds
+  script_execution_timeout: 1000    # milliseconds
+  max_concurrent_mechanics: 100
 
-registries:
-  auto_save: true
+# Scripting engine configuration
+scripting:
+  enabled: true
+  languages:
+    kotlin: true
+    javascript: true
+  security:
+    sandbox_mode: true
+    whitelist_apis: true
+    max_memory_mb: 64
+    max_execution_time_ms: 1000
+
+# Packet API settings
+packets:
+  enabled: true
+  intercept_chat: true
+  intercept_inventory: true
+  fake_entities: true
+  custom_guis: true
+
+# Resource pack pipeline
+resourcepacks:
+  enabled: true
+  auto_generation: true
+  merge_existing: true
+  bedrock_fallbacks: true
+  output_directory: "generated"
+
+# Data persistence
+persistence:
+  async_saves: true
   save_interval: 300  # seconds
+  backup_profiles: true
+  compression: true
 
-capabilities:
-  strict_versioning: false
-  allow_overrides: false
-
-model_router:
-  fallback_models: true
-  cache_size: 1000
+# Editor integration
+editor:
+  enabled: true
+  hot_reload: true
+  live_editing: true
+  debug_mode: true

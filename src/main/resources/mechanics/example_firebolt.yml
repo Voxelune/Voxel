@@ -1,53 +1,145 @@
-# Example Firebolt Mechanic
-# This demonstrates the Voxel Mechanic DSL
+# Example Firebolt Mechanic - Voxel Framework DSL v3
+# This demonstrates the advanced mechanic system with branching and scripting
 
 id: voxel:firebolt
 version: 1.0.0
 enabled: true
-description: "Fires a bolt of flame that damages enemies in a cone"
+description: "Advanced firebolt spell with intelligence scaling and branching effects"
 
-# The mechanic graph defines the execution flow
+# Event triggers - when this mechanic should execute
+events:
+  - onUse
+  - onRightClick
+
+# The mechanic execution graph
 graph:
-  # First, check if the caster has enough intelligence
+  # Condition: Check if caster has enough intelligence
   - node: condition.has_stat
     args:
-      stat: 'intelligence'
+      stat: intelligence
       gte: 10
+    on_fail: goto_insufficient_intelligence
     
-  # Target entities in a cone in front of the caster  
+  # Condition: Check mana cost
+  - node: condition.has_resource
+    args:
+      resource: mana
+      cost: 25
+    on_fail: goto_insufficient_mana
+    
+  # Effect: Consume mana
+  - node: effect.consume_resource
+    args:
+      resource: mana
+      amount: 25
+      
+  # Target: Find enemies in cone
   - node: target.cone
     args:
       angle: 30
       range: 12
+      filter: hostile
+      max_targets: 5
       
-  # Deal fire damage based on caster's intelligence
+  # Branch: Check if targets found
+  - node: condition.has_targets
+    on_fail: goto_no_targets
+    
+  # Effect: Deal fire damage with intelligence scaling
   - node: effect.damage
     args:
-      amount: '{caster:intelligence*0.6+10}'
-      element: 'fire'
+      amount: '{caster:intelligence * 0.6 + 10}'
+      element: fire
+      knockback: 0.5
       
-  # Show particle effects
+  # Effect: Apply burning
+  - node: effect.status
+    args:
+      effect: burning
+      duration: 3000
+      amplifier: 1
+      
+  # Effect: Particle trail
   - node: effect.particle
     args:
-      particle: 'voxel:firebolt_trail'
+      particle: 'flame'
       count: 20
+      speed: 0.1
+      spread: 0.2
       
-  # Play sound effect
+  # Effect: Sound effect
   - node: effect.sound
     args:
-      sound: 'voxel:firebolt_cast'
+      sound: 'entity.blaze.shoot'
       volume: 1.0
       pitch: 1.2
       
-  # Apply cooldown to the caster
+  # Effect: Apply cooldown
   - node: effect.cooldown
     args:
-      duration: 5000  # 5 seconds in milliseconds
+      duration: 5000
       stat: 'firebolt_cooldown'
+      
+  # Script: Custom logic for critical hits
+  - node: script.execute
+    args:
+      language: kotlin
+      code: |
+        val intelligence = caster.getStat("intelligence")
+        val critChance = intelligence * 0.02 // 2% per intelligence point
+        if (Math.random() < critChance) {
+          targets.forEach { target ->
+            target.damage(10.0) // Bonus crit damage
+            target.world.spawnParticle(Particle.CRIT, target.location, 10)
+          }
+          caster.sendMessage("§6Critical hit!")
+        }
+        
+  - node: goto
+    target: end
+    
+  # Error handling branches
+  - label: insufficient_intelligence
+    node: effect.message
+    args:
+      message: "§cYou need at least 10 Intelligence to cast this spell!"
+      type: action_bar
+    - node: goto
+      target: end
+      
+  - label: insufficient_mana
+    node: effect.message
+    args:
+      message: "§9Not enough mana! (Need 25)"
+      type: action_bar
+    - node: goto
+      target: end
+      
+  - label: no_targets
+    node: effect.message
+    args:
+      message: "§7No targets in range"
+      type: action_bar
+    - node: effect.particle
+      args:
+        particle: 'smoke'
+        count: 5
+        
+  - label: end
+    node: debug.log
+    args:
+      message: "Firebolt mechanic completed"
 
-# Metadata for the mechanic
+# Mechanic metadata
 metadata:
   category: 'combat'
-  tags: ['fire', 'projectile', 'damage']
+  tags: ['fire', 'projectile', 'damage', 'magic']
   cost_mana: 25
   cast_time: 1.5
+  cooldown: 5.0
+  required_stats:
+    intelligence: 10
+  scaling:
+    intelligence: 0.6
+  author: 'Voxelune'
+  version_added: '2.0.0'

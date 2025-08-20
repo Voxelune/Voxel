@@ -1,109 +1,170 @@
-# Voxel Core Library
+# Voxel Framework
 
-A standalone core library plugin for Paper 1.21.1 that provides unified mechanics, registries, and a capability graph for custom plugins. Voxel serves as the foundation for all custom plugins authored by Voxelune, requiring no external plugin dependencies.
+**Ultimate Plugin Developer Framework - Forge/Fabric for Paper Plugins**
 
-## Features
+Voxel is a comprehensive framework that brings Forge/Fabric-like development experience to Paper plugins. It provides registries, mechanics, packet manipulation, scripting, worldgen, and resourcepack pipelines, enabling developers to create any type of plugin without external dependencies.
 
-### Core Modules
-- **voxel-core**: Bootstrap, configuration, service wiring, and event wrapper
-- **voxel-registry**: Typed registries for Skills, Items, Mobs, Shops, Dungeons, Worldgen, Models, and Stats
-- **voxel-mechanic-dsl**: YAML/JSON-based mechanic definitions that compile to executable node graphs
-- **voxel-capabilities**: Capability graph system for plugin feature registration without external dependencies
-- **voxel-model-router**: Model, animation, sound, and particle mapping with automatic fallbacks
-- **voxel-utils**: General utilities including NBT, math, scheduler, i18n, and caching
+## 🚀 Features
 
-### Unique Features
-- **Capability Graph**: Runtime capability system where plugins register features and interact via typed contracts
-- **Mechanic DSL**: Compact domain-specific language for declaring mechanics that compile to node graphs with hot-reload support
-- **Model Router**: Maps Java entities/items to resource pack IDs with automatic fallbacks for unsupported clients
+### Core Systems
+- **Deferred Registries**: Forge-like registries for items, blocks, mobs, jobs, shops, dungeons, and more
+- **Mechanic DSL v3**: Graph-based mechanics with scripting, branching, loops, and events
+- **Built-in Packet API**: ProtocolLib-like functionality without external dependencies
+- **Resource Pack Pipeline**: Automatic generation and merging of custom models
+- **Scripting Engine**: Embedded Kotlin and JavaScript with sandboxing
+- **Stats & Profiles**: Comprehensive player data management
+- **Jobs & Teams**: Built-in progression and group systems
+- **Shops & Economy**: Balanced trading systems
+- **Dungeons & Worldgen**: Procedural generation tools
 
-## Installation
+### Developer Experience
+- **Hot Reload**: Live editing of mechanics and definitions
+- **Editor Integration**: In-game editing and debugging tools
+- **Performance Monitoring**: Built-in profiling and optimization
+- **Comprehensive APIs**: Type-safe, well-documented interfaces
+- **Module System**: Extensible architecture for custom functionality
 
-1. Download the Voxel plugin JAR file
+## 📦 Installation
+
+1. Download the Voxel Framework JAR
 2. Place it in your server's `plugins` directory
-3. Start your Paper 1.21.1 server
-4. The plugin will create its configuration and mechanics directories automatically
+3. Start your Paper 1.21.1+ server
+4. The framework will initialize with developer mode enabled
 
-## API Usage
+## 🛠️ Quick Start
 
-Access the Voxel API through Bukkit's Services Manager:
+### Accessing the API
 
 ```java
-VoxelAPI api = Bukkit.getServicesManager().getRegistration(VoxelAPI.class).getProvider();
+// Get the Voxel API
+VoxelAPI voxel = Bukkit.getServicesManager()
+    .getRegistration(VoxelAPI.class)
+    .getProvider();
 
-// Access sub-APIs
-RegistryAPI registries = api.getRegistryAPI();
-MechanicAPI mechanics = api.getMechanicAPI();
-CapabilityAPI capabilities = api.getCapabilityAPI();
-ModelAPI models = api.getModelAPI();
-StatAPI stats = api.getStatAPI();
+// Access registries
+VoxelRegistry<ItemDef> items = voxel.registry(ItemDef.class);
+VoxelRegistry<MobDef> mobs = voxel.registry(MobDef.class);
 ```
 
-## Mechanic DSL
+### Registering Custom Items
 
-Create mechanics using YAML files in the `plugins/Voxel/mechanics/` directory:
+```java
+public class MyPlugin extends JavaPlugin {
+    
+    private static final VoxelRegistry<ItemDef> ITEMS = 
+        VoxelAPI.registry(ItemDef.class);
+    
+    public static final RegistryObject<ItemDef> MAGIC_SWORD = 
+        ITEMS.register("magic_sword", () -> 
+            ItemDef.builder(new NamespacedKey("myplugin", "magic_sword"))
+                .displayName("§6Magic Sword")
+                .baseMaterial(Material.DIAMOND_SWORD)
+                .customModelData(1001)
+                .behavior(new MagicSwordBehavior())
+                .build()
+        );
+}
+```
+
+### Creating Mechanics
+
+Create `plugins/Voxel/mechanics/firebolt.yml`:
 
 ```yaml
-id: voxel:firebolt
+id: myplugin:firebolt
 version: 1.0.0
 enabled: true
-description: "Fires a bolt of flame that damages enemies in a cone"
+events: [onUse]
 
 graph:
   - node: condition.has_stat
-    args: { stat: 'intelligence', gte: 10 }
+    args: { stat: intelligence, gte: 10 }
   - node: target.cone
     args: { angle: 30, range: 12 }
   - node: effect.damage
-    args: { amount: '{caster:intelligence*0.6+10}', element: 'fire' }
+    args: { amount: '{caster:intelligence*0.6+10}', element: fire }
   - node: effect.particle
-    args: { particle: 'voxel:firebolt_trail' }
-
-metadata:
-  category: 'combat'
-  tags: ['fire', 'projectile', 'damage']
-  cost_mana: 25
-  cast_time: 1.5
+    args: { particle: 'flame', count: 20 }
 ```
 
-## Commands
+### Using the Packet API
 
-- `/voxel` - Display plugin information and status
-- `/voxel reload` - Reload configuration and mechanics (requires `voxel.admin.reload`)
-- `/voxel cap list` - List registered capabilities (requires `voxel.admin.inspect`)
-- `/voxel reg list <registry>` - List registry entries (requires `voxel.admin.inspect`)
-- `/voxel test run <mechanicId>` - Test a mechanic execution (requires `voxel.dev.test`)
+```java
+// Send fake entities
+PacketAPI packets = voxel.packets();
+packets.sendFakeEntity(player, fakeEntity);
 
-## Configuration
+// Custom scoreboards
+CustomScoreboard scoreboard = packets.createScoreboard("§6My Plugin");
+scoreboard.setLine(1, "§7Level: §f" + level);
+scoreboard.show(player);
+```
 
-The main configuration file (`config.yml`) allows you to:
-- Set logging levels
-- Enable/disable modules
-- Configure hot-reload for mechanics
-- Adjust registry settings
-- Customize capability behavior
-- Configure model router settings
+## 📚 Documentation
 
-## Dependencies
+- [Getting Started Guide](https://github.com/voxelune/voxel/wiki/Getting-Started)
+- [API Reference](https://github.com/voxelune/voxel/wiki/API-Reference)
+- [Mechanic DSL Guide](https://github.com/voxelune/voxel/wiki/Mechanics)
+- [Packet API Guide](https://github.com/voxelune/voxel/wiki/Packets)
+- [Registry System](https://github.com/voxelune/voxel/wiki/Registries)
+- [Examples](https://github.com/voxelune/voxel/tree/main/examples)
 
-Voxel is completely self-contained and depends only on:
-- **Paper API 1.21.1** (provided by your server)
+## 🎯 Philosophy
 
-No other plugins are required - Voxel is designed to be the root foundation for your plugin ecosystem.
+- **Developer-First**: Built for plugin developers, not server admins
+- **Dependency-Free**: Only requires Paper API - no external plugins
+- **Forge-Like Experience**: Familiar patterns for modding veterans
+- **Performance-Focused**: Async I/O, caching, and optimization built-in
+- **Extensible**: Every system can be extended and customized
 
-## Development
+## 🔧 Commands
 
-For plugin developers building on Voxel:
+- `/voxel` - Framework information and status
+- `/voxel reload` - Hot reload framework and definitions
+- `/voxel devinfo` - Detailed developer information
 
-1. Add Voxel as a dependency in your `plugin.yml`
-2. Access the API through the Services Manager
-3. Register your capabilities, mechanics, models, and stats
-4. Use the unified registry system for consistent data management
+## ⚙️ Configuration
 
-## License
+The framework uses sane defaults with minimal configuration required:
 
-MIT License - see the `LICENSE` file for details.
+```yaml
+developer:
+  mode: true              # Enable developer features
+  hot_reload: true        # Hot reload mechanics
+  debug_logging: true     # Verbose debug output
+  module_loading: false   # External modules (security risk)
 
-## Support
+performance:
+  async_io: true
+  registry_cache_size: 10000
+  mechanic_execution_timeout: 5000
+```
 
-Voxel is developed by Voxelune. For support and documentation, visit our development resources.
+## 🏗️ Architecture
+
+Voxel is built with a modular architecture:
+
+- **Registry System**: Deferred registration of all content types
+- **Mechanic Engine**: Graph-based execution with hot reload
+- **Packet Layer**: Low-level packet manipulation
+- **Resource Pipeline**: Automatic asset generation
+- **Scripting Runtime**: Sandboxed script execution
+- **Data Layer**: Async persistence and caching
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- [GitHub Issues](https://github.com/voxelune/voxel/issues)
+- [Discord Server](https://discord.gg/voxelune)
+- [Documentation Wiki](https://github.com/voxelune/voxel/wiki)
+
+---
+
+**Voxel Framework** - Bringing the power of Forge/Fabric to Paper plugins.

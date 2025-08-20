@@ -4,12 +4,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Centralized logging utility for Voxel.
+ * Enhanced logging utility for the Voxel Framework.
+ * 
+ * Provides structured logging with different levels and developer-friendly
+ * output formatting.
  */
 public class VoxelLogger {
     
     private final Logger bukkitLogger;
     private Level currentLevel = Level.INFO;
+    private boolean developerMode = false;
 
     public VoxelLogger(Logger bukkitLogger) {
         this.bukkitLogger = bukkitLogger;
@@ -24,13 +28,19 @@ public class VoxelLogger {
             this.currentLevel = Level.INFO;
         }
     }
+    
+    public void setDeveloperMode(boolean developerMode) {
+        this.developerMode = developerMode;
+    }
 
     public void trace(String message) {
-        log(Level.FINEST, message);
+        log(Level.FINEST, "[TRACE] " + message);
     }
 
     public void debug(String message) {
-        log(Level.FINE, message);
+        if (developerMode) {
+            log(Level.FINE, "[DEBUG] " + message);
+        }
     }
 
     public void info(String message) {
@@ -38,15 +48,31 @@ public class VoxelLogger {
     }
 
     public void warning(String message) {
-        log(Level.WARNING, message);
+        log(Level.WARNING, "[WARN] " + message);
     }
 
     public void error(String message) {
-        log(Level.SEVERE, message);
+        log(Level.SEVERE, "[ERROR] " + message);
     }
 
     public void error(String message, Throwable throwable) {
-        bukkitLogger.log(Level.SEVERE, message, throwable);
+        bukkitLogger.log(Level.SEVERE, "[ERROR] " + message, throwable);
+    }
+    
+    public void framework(String message) {
+        log(Level.INFO, "[FRAMEWORK] " + message);
+    }
+    
+    public void developer(String message) {
+        if (developerMode) {
+            log(Level.INFO, "[DEV] " + message);
+        }
+    }
+    
+    public void performance(String message) {
+        if (developerMode) {
+            log(Level.INFO, "[PERF] " + message);
+        }
     }
 
     private void log(Level level, String message) {
@@ -56,10 +82,14 @@ public class VoxelLogger {
     }
 
     public boolean isDebugEnabled() {
-        return bukkitLogger.isLoggable(Level.FINE);
+        return developerMode && bukkitLogger.isLoggable(Level.FINE);
     }
 
     public boolean isTraceEnabled() {
-        return bukkitLogger.isLoggable(Level.FINEST);
+        return developerMode && bukkitLogger.isLoggable(Level.FINEST);
+    }
+    
+    public boolean isDeveloperMode() {
+        return developerMode;
     }
 }

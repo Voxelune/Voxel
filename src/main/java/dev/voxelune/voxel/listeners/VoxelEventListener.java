@@ -3,10 +3,11 @@ package dev.voxelune.voxel.listeners;
 import dev.voxelune.voxel.VoxelPlugin;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
- * Main event listener for Voxel events.
+ * Main event listener for the Voxel Framework.
  */
 public class VoxelEventListener implements Listener {
     
@@ -17,10 +18,14 @@ public class VoxelEventListener implements Listener {
     }
 
     @EventHandler
-    public void onPluginEnable(PluginEnableEvent event) {
-        // This could be used to detect when dependent plugins are loaded
-        if (plugin.getCore() != null && plugin.getCore().isInitialized()) {
-            plugin.getVoxelLogger().debug("Plugin enabled: " + event.getPlugin().getName());
-        }
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // Load player profile
+        plugin.getFramework().getProfileManager().loadProfile(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        // Save player profile
+        plugin.getFramework().getProfileManager().saveProfile(event.getPlayer());
     }
 }

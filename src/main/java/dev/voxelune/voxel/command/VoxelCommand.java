@@ -1,19 +1,11 @@
 package dev.voxelune.voxel.command;
 
 import dev.voxelune.voxel.VoxelPlugin;
-import dev.voxelune.voxel.api.CapabilityAPI;
-import dev.voxelune.voxel.api.MechanicAPI;
-import dev.voxelune.voxel.api.RegistryAPI;
-import dev.voxelune.voxel.api.capability.Capability;
-import dev.voxelune.voxel.api.mechanic.MechanicContext;
-import dev.voxelune.voxel.api.mechanic.MechanicResult;
-import dev.voxelune.voxel.api.registry.RegistryType;
-import org.bukkit.NamespacedKey;
+import dev.voxelune.voxel.api.VoxelAPI;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +13,9 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Main command handler for Voxel.
+ * Main command handler for the Voxel Framework.
+ * 
+ * Provides developer-focused commands for framework management and debugging.
  */
 public class VoxelCommand implements CommandExecutor, TabCompleter {
     
@@ -34,17 +28,16 @@ public class VoxelCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 0) {
-            sendInfo(sender);
+            sendFrameworkInfo(sender);
             return true;
         }
 
         switch (args[0].toLowerCase()) {
             case "reload" -> handleReload(sender);
-            case "cap" -> handleCapability(sender, Arrays.copyOfRange(args, 1, args.length));
-            case "reg" -> handleRegistry(sender, Arrays.copyOfRange(args, 1, args.length));
-            case "test" -> handleTest(sender, Arrays.copyOfRange(args, 1, args.length));
+            case "devinfo" -> handleDevInfo(sender);
             default -> {
                 sender.sendMessage("§cUnknown subcommand: " + args[0]);
+                sender.sendMessage("§7Usage: /voxel <reload|devinfo>");
                 return false;
             }
         }
@@ -52,127 +45,90 @@ public class VoxelCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    private void sendInfo(CommandSender sender) {
-        sender.sendMessage("§6=== Voxel Core Library ===");
-        sender.sendMessage("§7Version: §f" + plugin.getDescription().getVersion());
-        sender.sendMessage("§7Author: §f" + plugin.getDescription().getAuthors().get(0));
-        sender.sendMessage("§7Status: §a" + (plugin.getApi().isReady() ? "Ready" : "Loading..."));
+    private void sendFrameworkInfo(CommandSender sender) {
+        VoxelAPI api = plugin.getApi();
+        
+        sender.sendMessage("§6╔══════════════════════════════════════╗");
+        sender.sendMessage("§6║        §fVoxel Framework v" + api.getVersion() + "        §6║");
+        sender.sendMessage("§6║   §7Ultimate Plugin Developer Framework  §6║");
+        sender.sendMessage("§6╚══════════════════════════════════════╝");
         sender.sendMessage("");
-        sender.sendMessage("§7Commands:");
-        sender.sendMessage("§8  /voxel reload §7- Reload configuration and mechanics");
-        sender.sendMessage("§8  /voxel cap list §7- List registered capabilities");
-        sender.sendMessage("§8  /voxel reg list <registry> §7- List registry entries");
-        sender.sendMessage("§8  /voxel test run <mechanicId> §7- Test a mechanic");
+        sender.sendMessage("§7Status: §a" + (api.isReady() ? "Ready" : "Loading..."));
+        sender.sendMessage("§7Developer Mode: " + (api.isDeveloperMode() ? "§aEnabled" : "§cDisabled"));
+        sender.sendMessage("§7Framework: §fForge/Fabric-like experience for Paper");
+        sender.sendMessage("");
+        sender.sendMessage("§6Available Commands:");
+        sender.sendMessage("§8  /voxel reload §7- Reload framework and definitions");
+        sender.sendMessage("§8  /voxel devinfo §7- Show detailed developer information");
+        sender.sendMessage("");
+        sender.sendMessage("§7Documentation: §bhttps://github.com/voxelune/voxel/wiki");
     }
 
     private void handleReload(CommandSender sender) {
-        if (!sender.hasPermission("voxel.admin.reload")) {
-            sender.sendMessage("§cYou don't have permission to reload Voxel.");
+        if (!sender.hasPermission("voxel.dev.reload")) {
+            sender.sendMessage("§cYou don't have permission to reload the framework.");
             return;
         }
         
-        sender.sendMessage("§7Reloading Voxel...");
+        sender.sendMessage("§7Reloading Voxel Framework...");
+        long startTime = System.currentTimeMillis();
+        
         try {
             plugin.reload();
-            sender.sendMessage("§aVoxel reloaded successfully!");
+            long duration = System.currentTimeMillis() - startTime;
+            sender.sendMessage("§aFramework reloaded successfully in " + duration + "ms!");
         } catch (Exception e) {
             sender.sendMessage("§cReload failed: " + e.getMessage());
+            plugin.getVoxelLogger().error("Reload failed", e);
         }
     }
 
-    private void handleCapability(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("voxel.admin.inspect")) {
-            sender.sendMessage("§cYou don't have permission to inspect capabilities.");
+    private void handleDevInfo(CommandSender sender) {
+        if (!sender.hasPermission("voxel.dev.info")) {
+            sender.sendMessage("§cYou don't have permission to view developer information.");
             return;
         }
         
-        if (args.length == 0 || !args[0].equals("list")) {
-            sender.sendMessage("§cUsage: /voxel cap list");
-            return;
-        }
-
-        CapabilityAPI capApi = plugin.getApi().getCapabilityAPI();
-        var capabilities = capApi.getRegisteredCapabilities();
+        VoxelAPI api = plugin.getApi();
+        var framework = plugin.getFramework();
+        var config = plugin.getConfiguration();
         
-        sender.sendMessage("§6=== Registered Capabilities ===");
-        if (capabilities.isEmpty()) {
-            sender.sendMessage("§7No capabilities registered.");
-        } else {
-            for (Capability<?> cap : capabilities) {
-                sender.sendMessage("§8  - §f" + cap.getKey().toString());
-            }
-        }
-    }
-
-    private void handleRegistry(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("voxel.admin.inspect")) {
-            sender.sendMessage("§cYou don't have permission to inspect registries.");
-            return;
-        }
-        
-        if (args.length < 2 || !args[0].equals("list")) {
-            sender.sendMessage("§cUsage: /voxel reg list <registry>");
-            return;
-        }
-
-        RegistryAPI regApi = plugin.getApi().getRegistryAPI();
-        var registryTypes = regApi.getRegistryTypes();
-        
-        sender.sendMessage("§6=== Registry Types ===");
-        if (registryTypes.isEmpty()) {
-            sender.sendMessage("§7No registries available.");
-        } else {
-            for (RegistryType<?> type : registryTypes) {
-                sender.sendMessage("§8  - §f" + type.getKey().toString());
-            }
-        }
-    }
-
-    private void handleTest(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("voxel.dev.test")) {
-            sender.sendMessage("§cYou don't have permission to test mechanics.");
-            return;
-        }
-        
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("§cOnly players can test mechanics.");
-            return;
-        }
-        
-        if (args.length < 2 || !args[0].equals("run")) {
-            sender.sendMessage("§cUsage: /voxel test run <mechanicId>");
-            return;
-        }
-
-        String mechanicId = args[1];
-        NamespacedKey key;
-        
-        try {
-            if (mechanicId.contains(":")) {
-                key = NamespacedKey.fromString(mechanicId);
-            } else {
-                key = new NamespacedKey("voxel", mechanicId);
-            }
-        } catch (Exception e) {
-            sender.sendMessage("§cInvalid mechanic ID: " + mechanicId);
-            return;
-        }
-
-        MechanicAPI mechApi = plugin.getApi().getMechanicAPI();
-        MechanicContext context = MechanicContext.builder()
-            .caster(player)
-            .origin(player.getLocation())
-            .build();
-
-        sender.sendMessage("§7Testing mechanic: §f" + key);
-        MechanicResult result = mechApi.executeMechanic(key, context);
-        
-        if (result.isSuccess()) {
-            sender.sendMessage("§aMechanic executed successfully!");
-            sender.sendMessage("§7Targets affected: §f" + result.getTargetsAffected());
-        } else {
-            sender.sendMessage("§cMechanic failed: " + result.getErrorMessage());
-        }
+        sender.sendMessage("§6═══ Voxel Framework Developer Information ═══");
+        sender.sendMessage("");
+        sender.sendMessage("§7Framework Status:");
+        sender.sendMessage("§8  Version: §f" + api.getVersion());
+        sender.sendMessage("§8  Ready: §f" + api.isReady());
+        sender.sendMessage("§8  Developer Mode: §f" + api.isDeveloperMode());
+        sender.sendMessage("§8  Hot Reload: §f" + config.isHotReloadEnabled());
+        sender.sendMessage("");
+        sender.sendMessage("§7Active Modules:");
+        sender.sendMessage("§8  Registry: §f" + config.isModuleEnabled("registry"));
+        sender.sendMessage("§8  Mechanics: §f" + config.isModuleEnabled("mechanics"));
+        sender.sendMessage("§8  Packets: §f" + config.isModuleEnabled("packets"));
+        sender.sendMessage("§8  Models: §f" + config.isModuleEnabled("models"));
+        sender.sendMessage("§8  Stats: §f" + config.isModuleEnabled("stats"));
+        sender.sendMessage("§8  Profiles: §f" + config.isModuleEnabled("profiles"));
+        sender.sendMessage("§8  Jobs: §f" + config.isModuleEnabled("jobs"));
+        sender.sendMessage("§8  Shops: §f" + config.isModuleEnabled("shops"));
+        sender.sendMessage("§8  Dungeons: §f" + config.isModuleEnabled("dungeons"));
+        sender.sendMessage("§8  Worldgen: §f" + config.isModuleEnabled("worldgen"));
+        sender.sendMessage("§8  Scripting: §f" + config.isModuleEnabled("scripting"));
+        sender.sendMessage("§8  Editor: §f" + config.isModuleEnabled("editor_integration"));
+        sender.sendMessage("");
+        sender.sendMessage("§7Performance:");
+        sender.sendMessage("§8  Async I/O: §f" + config.isAsyncIOEnabled());
+        sender.sendMessage("§8  Registry Cache: §f" + config.getRegistryCacheSize());
+        sender.sendMessage("§8  Mechanic Timeout: §f" + config.getMechanicExecutionTimeout() + "ms");
+        sender.sendMessage("§8  Script Timeout: §f" + config.getScriptExecutionTimeout() + "ms");
+        sender.sendMessage("");
+        sender.sendMessage("§7Memory Usage:");
+        Runtime runtime = Runtime.getRuntime();
+        long totalMemory = runtime.totalMemory() / 1024 / 1024;
+        long freeMemory = runtime.freeMemory() / 1024 / 1024;
+        long usedMemory = totalMemory - freeMemory;
+        sender.sendMessage("§8  Used: §f" + usedMemory + "MB");
+        sender.sendMessage("§8  Free: §f" + freeMemory + "MB");
+        sender.sendMessage("§8  Total: §f" + totalMemory + "MB");
     }
 
     @Override
@@ -180,32 +136,10 @@ public class VoxelCommand implements CommandExecutor, TabCompleter {
         List<String> completions = new ArrayList<>();
         
         if (args.length == 1) {
-            String[] subCommands = {"reload", "cap", "reg", "test"};
+            String[] subCommands = {"reload", "devinfo"};
             for (String sub : subCommands) {
                 if (sub.startsWith(args[0].toLowerCase())) {
                     completions.add(sub);
-                }
-            }
-        } else if (args.length == 2) {
-            switch (args[0].toLowerCase()) {
-                case "cap", "reg" -> {
-                    if ("list".startsWith(args[1].toLowerCase())) {
-                        completions.add("list");
-                    }
-                }
-                case "test" -> {
-                    if ("run".startsWith(args[1].toLowerCase())) {
-                        completions.add("run");
-                    }
-                }
-            }
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("test") && args[1].equalsIgnoreCase("run")) {
-            // Tab complete mechanic IDs
-            var mechanics = plugin.getApi().getMechanicAPI().getLoadedMechanics();
-            for (NamespacedKey key : mechanics) {
-                String keyStr = key.toString();
-                if (keyStr.startsWith(args[2].toLowerCase())) {
-                    completions.add(keyStr);
                 }
             }
         }
