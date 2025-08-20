@@ -1,0 +1,53 @@
+# Example Firebolt Mechanic
+# This demonstrates the Voxel Mechanic DSL
+
+id: voxel:firebolt
+version: 1.0.0
+enabled: true
+description: "Fires a bolt of flame that damages enemies in a cone"
+
+# The mechanic graph defines the execution flow
+graph:
+  # First, check if the caster has enough intelligence
+  - node: condition.has_stat
+    args:
+      stat: 'intelligence'
+      gte: 10
+    
+  # Target entities in a cone in front of the caster  
+  - node: target.cone
+    args:
+      angle: 30
+      range: 12
+      
+  # Deal fire damage based on caster's intelligence
+  - node: effect.damage
+    args:
+      amount: '{caster:intelligence*0.6+10}'
+      element: 'fire'
+      
+  # Show particle effects
+  - node: effect.particle
+    args:
+      particle: 'voxel:firebolt_trail'
+      count: 20
+      
+  # Play sound effect
+  - node: effect.sound
+    args:
+      sound: 'voxel:firebolt_cast'
+      volume: 1.0
+      pitch: 1.2
+      
+  # Apply cooldown to the caster
+  - node: effect.cooldown
+    args:
+      duration: 5000  # 5 seconds in milliseconds
+      stat: 'firebolt_cooldown'
+
+# Metadata for the mechanic
+metadata:
+  category: 'combat'
+  tags: ['fire', 'projectile', 'damage']
+  cost_mana: 25
+  cast_time: 1.5

@@ -1,0 +1,20 @@
+name: Voxel
+author: Voxelune
+main: dev.voxelune.voxel.VoxelPlugin
+version: 1.21.1
+api-version: '1.21'
+load: POSTWORLD
+depend: []
+commands:
+  voxel:
+    description: Voxel root command
+    permission: voxel.user.use
+permissions:
+  voxel.user.use:
+    default: true
+  voxel.admin.reload:
+    default: op
+  voxel.admin.inspect:
+    default: op
+  voxel.dev.test:
+    default: op

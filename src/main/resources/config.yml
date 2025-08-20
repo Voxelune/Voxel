@@ -1,0 +1,30 @@
+# Voxel Core Library Configuration
+
+logging:
+  level: INFO  # INFO|DEBUG|TRACE
+
+modules:
+  enable:
+    core: true
+    registry: true
+    mechanic: true
+    capabilities: true
+    model_router: true
+    utils: true
+
+mechanics:
+  hot_reload: true
+  watch_dirs:
+    - "plugins/Voxel/mechanics"
+
+registries:
+  auto_save: true
+  save_interval: 300  # seconds
+
+capabilities:
+  strict_versioning: false
+  allow_overrides: false
+
+model_router:
+  fallback_models: true
+  cache_size: 1000
