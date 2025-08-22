@@ -1,35 +1,33 @@
 package dev.voxelune.voxel.api.capability;
 
-import org.bukkit.plugin.Plugin;
+import dev.voxelune.voxel.api.internal.capability.InternalCapabilityProvider;
+import dev.voxelune.voxel.api.internal.utils.InternalReflector;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Provides an implementation for a specific capability.
- */
-public interface CapabilityProvider<T> {
-    
-    /**
-     * Get the capability this provider implements.
-     */
-    Capability<T> getCapability();
-    
-    /**
-     * Get the plugin that registered this provider.
-     */
-    Plugin getPlugin();
-    
-    /**
-     * Get the implementation instance.
-     */
-    T getInstance();
-    
-    /**
-     * Get the priority of this provider (higher = more preferred).
-     */
-    default int getPriority() { return 0; }
-    
-    /**
-     * Check if this provider is available.
-     */
-    default boolean isAvailable() { return true; }
+import java.lang.reflect.Constructor;
+import java.util.Optional;
+
+@SuppressWarnings("unchecked")
+public interface CapabilityProvider<T> extends Capability {
+
+    @NotNull
+    Optional<T> find(@NotNull Object instance);
+
+    @NotNull
+    T get(@NotNull Object instance);
+
+    @NotNull
+    T put(@NotNull Object instance, @NotNull T value);
+
+    @NotNull
+    T remove(@NotNull Object instance);
+
+    static <T> @NotNull CapabilityProvider<T> newInstance(@NotNull Class<T> capability) {
+        Constructor<InternalCapabilityProvider> constructor = InternalReflector.getCapabilityProviderConstructor();
+        try {
+            return constructor.newInstance(capability);
+        } catch (Exception e) {
+            throw new RuntimeException("An exception occurred while creating a new instance of CapabilityProvider", e);
+        }
+    }
 }
-</btml_action>
